@@ -136,6 +136,7 @@ namespace MatematicaDiscreta
                         int n = 1;
                         int solutionNumber = 1;
                         int solution = 1;
+                        bool isFirst = true;
 
                         while (solutionNumber-1 < mcd)
                         {
@@ -149,10 +150,11 @@ namespace MatematicaDiscreta
                                     solution = multipliedResult + n * (y / mcd);
                                 }
                             }
-                            else
+                            else if (isFirst)
                             {
                                 Console.WriteLine($"\nSoluzione 1: {multipliedResult} ovvero {x} * {multipliedResult} = {result} (mod{y})", Console.ForegroundColor = ConsoleColor.Gray);
                                 solutionNumber++;
+                                isFirst = false;
                             }
 
                             Console.WriteLine($"\nSoluzione {solutionNumber}: {multipliedResult} + {n} * ({y} / {mcd}) = {solution} ovvero {x} * {solution} = {result} (mod{y})", Console.ForegroundColor = ConsoleColor.Gray);
