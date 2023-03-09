@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using static MatematicaDiscreta.Program;
 
@@ -14,7 +15,10 @@ namespace MatematicaDiscreta
                               "\n 1. Calcolo Massimo Comun Divisore" +
                               "\n 2. Calcolo Soluzione Equazione Diofantea" +
                               "\n 3. Calcolo Soluzioni Congruenza Lineare" +
-                              "\n 4. Calcolo Soluzioni Sistema di Congruenze Lineari\n", Console.ForegroundColor = ConsoleColor.White);
+                              "\n 4. Calcolo Soluzioni Sistema di Congruenze Lineari" +
+                              "\n 5. Calcolo Funzione di Eulero" +
+                              "\n 6. Conversione di Base" +
+                              "\n 7. Calcolo Elementi Invertibili Anello\n", Console.ForegroundColor = ConsoleColor.White);
 
             try
             {
@@ -58,6 +62,21 @@ namespace MatematicaDiscreta
 
                         LinearCongruenceSystem(linearCongruences);
                         Console.ReadKey(true);
+                        break;
+
+                    case 5:
+                        Console.WriteLine("\nInserisci il numero di cui desideri calcolare la funzione di Eulero:\n", Console.ForegroundColor = ConsoleColor.White);
+                        EulerFunction(Convert.ToInt32(Console.ReadLine()));
+                        break;
+
+                    case 6:
+                        Console.WriteLine("\nInserisci prima il numero in base 10 e poi la base a cui desideri eseguire la conversione:\n", Console.ForegroundColor = ConsoleColor.White);
+                        BaseConversion(Convert.ToInt32(Console.ReadLine()), Convert.ToInt32(Console.ReadLine()));
+                        break;
+
+                    case 7:
+                        Console.WriteLine("\nInserisci prima la classe di resto e poi la base desiderata\n", Console.ForegroundColor = ConsoleColor.White);
+                        InvertibleCongruenceClasses(Convert.ToInt32(Console.ReadLine()), Convert.ToInt32(Console.ReadLine()));
                         break;
 
                     default:
@@ -270,7 +289,7 @@ namespace MatematicaDiscreta
                 Console.WriteLine(toPrint + $" ---> {specificNmultiplied[i]} * {congruencesResults[i]} = {linearCongruences[i][1]} (mod{linearCongruences[i][2]})", Console.ForegroundColor = ConsoleColor.Gray);
             }
 
-            Console.WriteLine("\nCalcolo il risultato:\n", Console.ForegroundColor = ConsoleColor.White);
+            Console.WriteLine("\nCalcolo il risultato minimo:\n", Console.ForegroundColor = ConsoleColor.White);
             isFirst = true;
             int finalResult = 0;
             string finalResultCalculation = "";
@@ -288,7 +307,157 @@ namespace MatematicaDiscreta
             }
 
             Console.WriteLine(finalResultCalculation + " = " + finalResult, Console.ForegroundColor = ConsoleColor.Green);
+            Console.WriteLine("\nIl sistema presenta ulteriori soluzioni nella forma:", Console.ForegroundColor = ConsoleColor.White);
+            Console.WriteLine($"\n{finalResult} + {N}k", Console.ForegroundColor = ConsoleColor.White);
         }
+
+        static int EulerFunction(int n, bool writeLogs = true)
+        {
+            if (n <= 0)
+            {
+                Console.WriteLine("\nNon è possibile calcolare la funzione di Eulero su numeri inferiori a 1", Console.ForegroundColor = ConsoleColor.Red);
+                return 0;
+            }
+
+            int[] primeNumbers = PrimeFactorization(n);
+            int[] eulerNumbers = new int[primeNumbers.Length/2];
+            int[] primeFactors = new int[primeNumbers.Length/2];
+            int[] primeFactorsExponents = new int[primeNumbers.Length/2];
+            int a = 0, b = 0;
+
+            for (int j = 0; j < primeNumbers.Length; j++)
+            {
+                if (j % 2 == 0 || j == 0) primeFactors[a++] = primeNumbers[j];
+                else primeFactorsExponents[b++] = primeNumbers[j];
+            }
+
+            string primeFactorizationString = "\nEseguo la scomposizione in numeri primi: ";
+
+            for (int k = 0; k < primeFactors.Length; k++)
+            {
+                primeFactorizationString += $"{primeFactors[k]}^{primeFactorsExponents[k]}";
+                if (k != primeFactors.Length-1) primeFactorizationString += " * ";
+            }
+
+            if (writeLogs) Console.WriteLine(primeFactorizationString, Console.ForegroundColor = ConsoleColor.White);
+            if (writeLogs) Console.WriteLine("\nEseguo la formula di Eulero, phi(p^k) = (p-1) * p^(k-1):\n", Console.ForegroundColor = ConsoleColor.White);
+            int eulerNumberResult = 1;
+            string eulerNumberAdditionString = "";
+
+            for (int l = 0; l < primeFactorsExponents.Length; l++)
+            {
+                eulerNumbers[l] = (primeFactors[l] - 1) * (int)Math.Pow(primeFactors[l], primeFactorsExponents[l] - 1); // Phi(p^k) = p^(k-1) * (p-1) 
+                eulerNumberResult = eulerNumberResult * eulerNumbers[l];
+
+                if (l != primeFactorsExponents.Length - 1) eulerNumberAdditionString += $"{eulerNumbers[l]} * ";
+                else eulerNumberAdditionString += $"{eulerNumbers[l]}";
+
+                if (writeLogs) Console.WriteLine($"Phi({primeFactors[l]}^{primeFactorsExponents[l]}) = ({primeFactors[l]} - 1) * ({primeFactors[l]}^{primeFactorsExponents[l] - 1}) = {primeFactors[l] - 1} * {Math.Pow(primeFactors[l], primeFactorsExponents[l] - 1)} = {eulerNumbers[l]}", Console.ForegroundColor =  ConsoleColor.Gray);
+                primeFactorsExponents[l]--;
+            }
+
+            if (eulerNumbers.Length > 1) Console.WriteLine($"\nDunque phi({n}) = {eulerNumberAdditionString} = {eulerNumberResult}", Console.ForegroundColor = ConsoleColor.Green);
+            else if (writeLogs) Console.WriteLine($"\nDunque phi({n}) = {eulerNumberResult}", Console.ForegroundColor = ConsoleColor.Green);
+            return eulerNumberResult;
+
+            static int[] PrimeFactorization(int n) //Factors in even positions, exponents in odd positions 
+            {
+                int i = 2;
+                List<int> primeFactorsList = new List<int>();
+                int[] PrimeFactorsExponents;
+                int[] primeFactors;
+
+                while (n > 1)
+                {
+                    if (checkIfPrime(n))
+                    {
+                        addToPrimeFactors(n, primeFactorsList);
+                        n = 1;
+                    }
+                    else if (n % i == 0 && checkIfPrime(i))
+                    {
+                        addToPrimeFactors(i, primeFactorsList);
+                        n = n / i;
+                    }
+                    else i++;
+                }
+                
+                    //primeFactorsList.Add(n);
+                    //primeFactorsList.Add(1);
+
+                static void addToPrimeFactors (int primeFactor, List<int> primeFactorsList)
+                {
+                    if (primeFactorsList.Contains(primeFactor)) primeFactorsList[primeFactorsList.IndexOf(primeFactor) + 1] += 1;
+                    else
+                    {
+                        primeFactorsList.Add(primeFactor);
+                        primeFactorsList.Add(1);
+                    }
+                }
+
+                static bool checkIfPrime(int n)
+                {
+                    int i = 2;
+                    while (i <= n / 2)
+                    {
+                        if (n % i == 0) return false;
+                        i++;
+                    }
+                    return true;
+                }
+
+                return primeFactorsList.ToArray();
+            }
+        }
+
+        static int BaseConversion(int n, int b, bool writeLogs = true)
+        {
+            if (n < 1 || b < 2)
+            {
+                Console.WriteLine($"\nNon è possibile lavorare con basi minori di 2 o numeri negativi", Console.ForegroundColor = ConsoleColor.Red);
+                return -1;
+            }
+
+            int divisionRemainder = 0;
+            int divisionResult = 0;
+            int convertedResult = 0;
+            int multiplier = 1;
+            bool hasFinished = false;
+
+            if (writeLogs) Console.WriteLine($"\nEseguo la conversione di {n} in base {b}:", Console.ForegroundColor = ConsoleColor.White);
+
+            while (!hasFinished)
+            {
+                divisionRemainder = n % b;
+                divisionResult = n / b;
+                if (divisionResult == 0) hasFinished = true;
+                convertedResult += (divisionRemainder * multiplier);
+                multiplier = multiplier * 10;
+                if (writeLogs) Console.WriteLine($"\n{n} / {b} = {divisionResult} + {divisionRemainder} quindi n = {convertedResult}", Console.ForegroundColor = ConsoleColor.Gray);
+                n = n / b;
+            }
+
+            if (writeLogs) Console.WriteLine($"\nDunque il risultato è: {convertedResult}", Console.ForegroundColor = ConsoleColor.Green);
+            return convertedResult;
+        }
+
+       
+
+        static void InvertibleCongruenceClasses(int congruenceClass, int b)
+        {
+            if (congruenceClass < 2 ||  b < 2)
+            {
+                Console.WriteLine($"\nNon è possibile lavorare con classi minori di 2", Console.ForegroundColor = ConsoleColor.Red);
+                return;
+            }
+
+            Console.WriteLine($"Inizio lavorando sulla classe di congruenza:", Console.ForegroundColor = ConsoleColor.White);
+            int eulerNumber = EulerFunction(congruenceClass);
+            Console.WriteLine($"\nConverto il risultato nella base appropriata:", Console.ForegroundColor = ConsoleColor.White);
+            int convertedNumber = BaseConversion(eulerNumber, b);
+            Console.WriteLine($"\nL'anello di classe {congruenceClass} presenta {convertedNumber} elementi invertibili", Console.ForegroundColor = ConsoleColor.White);
+        }
+        
 
         public class BezoutCalculator
         {
